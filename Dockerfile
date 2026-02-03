@@ -35,11 +35,11 @@ COPY requirements.txt /app/requirements.txt
 # Create virtual environment and install Python dependencies
 RUN python -m venv /app/.venv && \
     /app/.venv/bin/pip install --upgrade pip && \
-    /app/.venv/bin/pip install -r /app/requirements.txt
 
 # Copy Python service code
 COPY server/ /app/server/
 COPY facilitator/ /app/facilitator/
+
 
 # Copy built client-web from builder stage
 COPY --from=client-builder /app/client-web/dist /usr/share/nginx/html
