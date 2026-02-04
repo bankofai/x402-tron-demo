@@ -62,3 +62,21 @@ npm run dev
 Access Web Client at `http://localhost:5173`.
 
 ---
+
+## Troubleshooting
+
+### Terminal Client
+
+1. **TRON_PRIVATE_KEY Not Found:**
+   - Ensure `.env` file exists in project root with the correct key.
+
+2. **HTTP Timeout:**
+   - If on-chain settlement is slow, increase `HTTP_TIMEOUT_SECONDS` in `.env`.
+
+### Web Client
+
+1. **Unsupported Network:**
+   - Ensure TronLink is set to **Nile** or **Shasta** testnet.
+
+2. **CORS Errors:**
+   - Check if Server and Facilitator have CORSMiddleware configured (they are by default in this demo).

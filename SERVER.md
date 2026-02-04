@@ -39,3 +39,24 @@ FACILITATOR_URL=http://localhost:8001
 | `/protected`  | `GET`  | Requires valid payment permits.  |
 
 ---
+
+## Troubleshooting
+
+1. **PAY_TO_ADDRESS Not Configured:**
+   - Ensure `.env` file is properly set up.
+   - Restart the server after any changes.
+
+2. **Resource Delivery Errors:**
+   - Check Facilitator service health using:
+     ```bash
+     curl http://localhost:8001/
+     ```
+
+3. **Slow Image Generation:**
+   - Optimize Pillow processing by caching pre-generated assets.
+
+4. **Service Downtime:**
+   - Restart using Docker Compose:
+     ```bash
+     docker-compose restart server
+     ```

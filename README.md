@@ -2,7 +2,20 @@
 
 ## Overview
 
-The **X402-Tron Demo** project demonstrates the integration of the **x402 payment protocol** with the TRON blockchain ecosystem. It showcases secure pay-per-request mechanisms for accessing protected resources, combining blockchain-based automation with decentralized applications (dApps).
+The **X402-Tron Demo** showcases a blockchain-powered implementation of the **x402 payment protocol**, enabling secure pay-to-access workflows. The demo demonstrates how decentralized payments can facilitate resource access using an **Agent-based payment model** as a conceptual framework, even if the underlying implementation uses standard Python services.
+
+### Key Concept: Agent-Like Payment Flow
+
+Although powered by Python servers, the demo simulates an **Agent-driven interaction model**: 
+1. The **Client Agent** interacts with a **Server Agent** to request access to protected resources.
+2. Upon receiving a `402 Payment Required` challenge, the Client operates similarly to an agent by signing cryptographic permits to fulfill payment requirements.
+3. The **Facilitator Agent**, acting conceptually as a payment handler, validates these permits and settles the transactions on the TRON blockchain.
+4. After payment confirmation, the Server delivers the resource to the Client Agent.
+
+This framework ensures:
+- **Trustless Transactions**: Payments are cryptographically verified and settled on-chain.
+- **Flexible Interactions**: Agents interact seamlessly to execute workflows, even using basic underlying services.
+- **Scalability**: Designed for microtransactions with minimal overhead, supporting decentralized applications (dApps).
 
 ---
 
@@ -10,37 +23,36 @@ The **X402-Tron Demo** project demonstrates the integration of the **x402 paymen
 1. [Core Components](#core-components)
 2. [Environment Setup](#environment-setup)
 3. [Running the Demo](#running-the-demo)
-4. [Troubleshooting](#troubleshooting)
-5. [Additional Documentation](#additional-documentation)
+4. [Additional Documentation](#additional-documentation)
 
 ---
 
 ## Core Components
 
-### **Server: Secure Data as a Service**
-- **Purpose:** Serve premium resources (e.g., dynamically generated images) that require TRON micropayments.
+### **Server: Resource Provider Agent (Conceptual)**
+- **Purpose:** Monetizes premium resources such as dynamically generated images via blockchain-based payments.
 - **Features:**
   - Implements the x402 payment protocol (HTTP 402 Payment Required).
-  - Protects resources with payment validation on TRON Nile Testnet.
+  - Protects resources by validating TRON blockchain transactions.
 
-### **Facilitator: Blockchain Payment Handler**
-- **Purpose:** Trusted intermediary for payment processing.
+### **Facilitator: Payment Handler Agent (Conceptual)**
+- **Purpose:** Processes and validates cryptographic payment permits.
 - **Features:**
-  - Verifies signed permits for payment.
-  - Settles transactions on the TRON blockchain.
+  - Ensures signed permits comply with the TIP-712 standard.
+  - Settles micropayments on the TRON Nile Testnet.
 
-### **Client: Payment Demonstration Tool**
-- **CLI Client**:
-  - Command-line interface for automated payment and resource access.
-- **Web Client**:
-  - React-powered UI for showcasing wallet-based payment flows.
+### **Client: Requesting Agent**
+- **CLI Client:**
+  - Operates as an agent to sign permits and automate resource retrieval.
+- **Web Client:**
+  - Simulates manual agent-like behavior using the TronLink wallet.
 
 ---
 
 ## Environment Setup
 
 ### **Required Environment Variables**
-Create a `.env` file in the project root:
+Create a `.env` file in the project root to configure blockchain and service settings:
 
 ```env
 # TRON private key for Facilitator's blockchain interactions.
@@ -49,17 +61,17 @@ TRON_PRIVATE_KEY=<your_tron_private_key>
 # Payment recipient address for Server.
 PAY_TO_ADDRESS=<server_recipient_tron_address>
 
-# Server URL (default: localhost).
+# Server URL for accessing secured resources.
 SERVER_URL=http://localhost:8000
 
-# HTTP timeout for network operations.
-HTTP_TIMEOUT_SECONDS=60
-
-# Facilitator URL (default: localhost:8001).
+# Facilitator API URL for payment validation.
 FACILITATOR_URL=http://localhost:8001
+
+# HTTP timeout for requests.
+HTTP_TIMEOUT_SECONDS=60
 ```
 
-### **Installation**
+### **Installation Steps**
 
 1. **Clone the repository:**
    ```bash
@@ -67,20 +79,21 @@ FACILITATOR_URL=http://localhost:8001
    cd x402-tron-demo
    ```
 
-2. **Create the `.env` file:**
-   Refer to the example above for configurations.
+2. **Set up the `.env` file:**
+   Configure environment variables as outlined above.
 
 3. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
-   npm install # For client/web
+   npm install # For web client dependencies
    ```
 
 ---
 
 ## Running the Demo
 
-### **Start Services Using Scripts**
+### **Using Shell Scripts**
+To simplify running services:
 
 ```bash
 # Start Facilitator
@@ -96,34 +109,34 @@ FACILITATOR_URL=http://localhost:8001
 cd client/web && npm run dev
 ```
 
-### **Docker Setup**
-Use Docker Compose for containerized execution:
+### **Accessing the Demo**
+1. **CLI Client:**
+   Use the CLI to request `protected_image.png` from the server:
+   ```bash
+   ./start.sh client
+   ```
+   After resolving payment challenges (via TRON Nile), the protected resource will be downloaded locally.
 
+2. **Web Client:**
+   Navigate to `http://localhost:5173` (or `http://localhost:8080` if using Docker) to:
+   - Connect your TronLink wallet.
+   - Sign payment permits.
+   - Access premium resources through the intuitive web interface.
+
+### **Docker Setup**
+Alternatively, deploy the demo containerized:
 ```bash
 docker-compose up -d
 ```
-Access the Web Client at `http://localhost:8080`.
-
----
-
-## Troubleshooting
-
-### **Common Issues**
-1. **`TRON_PRIVATE_KEY` not found:**
-   - Ensure `.env` is correctly configured.
-   - Double-check test TRON addresses on the [Nile Faucet](https://nileex.io/join/getJoinPage).
-
-2. **HTTP Timeout:**
-   - Increase `HTTP_TIMEOUT_SECONDS` in `.env` for slow blockchain interactions.
-
-3. **Web Client Issues**:
-   - Ensure TronLink is switched to **Nile Testnet**.
+Access services via:
+- **Web Client**: `http://localhost:8080`
+- **Server API**: `http://localhost:8000`
 
 ---
 
 ## Additional Documentation
 
-- **System Architecture:** Communication flows are detailed in [ARCHITECTURE.md](ARCHITECTURE.md).
-- **Server Documentation:** API specifications are available in [SERVER.md](SERVER.md).
-- **Facilitator Documentation:** Payment flows are explained in [FACILITATOR.md](FACILITATOR.md).
-- **Client Documentation:** Usage instructions are provided in [CLIENT.md](CLIENT.md).
+- **System Architecture:** Explore inter-component communication in [ARCHITECTURE.md](ARCHITECTURE.md).
+- **Server Details:** Resource management info in [SERVER.md](SERVER.md).
+- **Facilitator Details:** Payment processing insights in [FACILITATOR.md](FACILITATOR.md).
+- **Client Details:** Instructions for CLI and web demo in [CLIENT.md](CLIENT.md).

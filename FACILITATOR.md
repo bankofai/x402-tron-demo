@@ -41,3 +41,20 @@ FACILITATOR_URL=http://localhost:8001
 ```
 
 ---
+
+## Troubleshooting
+
+1. **Invalid Permit Structure:**
+   - Ensure permit follows TIP-712 standards.
+
+2. **Fee Inaccuracy:**
+   - Reconfigure `BASE_FEE` to match network conditions.
+
+3. **Network Timeout:**
+   - Increase `HTTP_TIMEOUT_SECONDS` in settings.
+
+4. **Service Downtime:**
+   - Restart using Docker Compose:
+     ```bash
+     docker-compose restart facilitator
+     ```
