@@ -74,29 +74,31 @@ HTTP_TIMEOUT_SECONDS=60
 
 ## Quick Start
 
-### Using Scripts
-Quickly start the demo services using the provided scripts:
+### Step 1: Start X402 Service
 
+Start the essential services (Facilitator and Server) to enable the x402 payment protocol:
+
+**Using Scripts:**
 ```bash
 # Start Facilitator
 ./start.sh facilitator
 
-# Start Server
+# Start Server (in a new terminal)
 ./start.sh server
-
-# Run Terminal Client
-./start.sh client
-
-# Start Web Client (Development)
-cd client/web && npm run dev
 ```
 
-### Using Docker
-Alternatively, deploy all services with Docker Compose:
+**Using Docker:**
 ```bash
 docker-compose up -d
 ```
-Access the Web Client at `http://localhost:8080` and Server at `http://localhost:8000`.
+
+### Step 2: Access and Payment via openclaw Agent
+
+Once the services are running, the **openclaw** agent can automatically detect the `402 Payment Required` challenge, sign the necessary permits, settle  the payment via the facilitator, and retrieve the resource for you.
+
+> Ensure the **openclaw** agent has the [openclaw-extension](https://github.com/open-aibank/openclaw-extension) (a suite of tools and skills developed by AIBank to empower AI Agents with financial sovereignty) enabled to handle x402 protocol operations.
+
+<img src="./assets/openclaw.jpg" alt="openclaw Agent" width="600">
 
 ---
 
