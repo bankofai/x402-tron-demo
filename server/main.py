@@ -8,11 +8,11 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from x402.server import X402Server
-from x402.fastapi import x402_protected
-from x402.facilitator import FacilitatorClient
-from x402.config import NetworkConfig
-from x402.tokens.registry import TokenRegistry
+from x402_tron.server import X402Server
+from x402_tron.fastapi import x402_protected
+from x402_tron.facilitator import FacilitatorClient
+from x402_tron.config import NetworkConfig
+from x402_tron.tokens.registry import TokenRegistry
 
 from PIL import Image, ImageDraw, ImageFont
 

@@ -11,10 +11,10 @@ from pathlib import Path
 
 import httpx
 from dotenv import load_dotenv
-from x402.clients import X402Client
-from x402.clients import X402HttpClient
-from x402.mechanisms.client.tron_upto import UptoTronClientMechanism
-from x402.signers.client import TronClientSigner
+from x402_tron.clients import X402Client
+from x402_tron.clients import X402HttpClient
+from x402_tron.mechanisms.client.tron_upto import UptoTronClientMechanism
+from x402_tron.signers.client import TronClientSigner
 
 # Load environment variables
 load_dotenv()

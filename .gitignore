@@ -18,3 +18,4 @@
 /logs/server-stderr.log
 /logs/server-stdout.log
 /logs/supervisord.log
+.env
