@@ -14,12 +14,12 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from x402.logging_config import setup_logging
-from x402.mechanisms.facilitator import UptoTronFacilitatorMechanism
-from x402.signers.facilitator import TronFacilitatorSigner
-from x402.config import NetworkConfig
-from x402.tokens.registry import TokenRegistry
-from x402.types import (
+from x402_tron.logging_config import setup_logging
+from x402_tron.mechanisms.facilitator import UptoTronFacilitatorMechanism
+from x402_tron.signers.facilitator import TronFacilitatorSigner
+from x402_tron.config import NetworkConfig
+from x402_tron.tokens.registry import TokenRegistry
+from x402_tron.types import (
     PaymentPayload,
     PaymentRequirements,
     VerifyResponse,

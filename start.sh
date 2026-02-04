@@ -27,11 +27,6 @@ if [ ! -f ".env" ]; then
 fi
 
 # Activate virtual environment if it exists
-if [ -d ".venv" ]; then
-    echo "Activating virtual environment..."
-    source .venv/bin/activate
-fi
-
 case "$COMPONENT" in
     server)
         echo "=========================================="
