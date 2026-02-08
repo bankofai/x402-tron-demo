@@ -42,7 +42,7 @@ class SettleRequest(BaseModel):
 
 class FeeQuoteRequest(BaseModel):
     """Fee quote request model"""
-    accept: PaymentRequirements
+    accepts: list[PaymentRequirements]
     paymentPermitContext: dict | None = None
 
 # Setup logging
@@ -56,12 +56,15 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 TRON_PRIVATE_KEY = os.getenv("TRON_PRIVATE_KEY", "")
 
 # Supported networks
-SUPPORTED_NETWORKS = ["shasta", "nile"]
+SUPPORTED_NETWORKS = ["mainnet", "shasta", "nile"]
 
 # Facilitator configuration
 FACILITATOR_HOST = "0.0.0.0"
 FACILITATOR_PORT = 8001
-BASE_FEE = 100  # 0.0001 USDT (6 decimals) - Fee charged per transaction
+BASE_FEE = {
+    "USDT": 100,       # 0.0001 USDT (6 decimals)
+    "USDD": 100_000_000_000_000,  # 0.0001 USDD (18 decimals)
+}
 
 if not TRON_PRIVATE_KEY:
     raise ValueError("TRON_PRIVATE_KEY environment variable is required")
@@ -109,7 +112,7 @@ print("=" * 80)
 print("X402 Payment Facilitator - Configuration")
 print("=" * 80)
 print(f"Facilitator Address: {facilitator_address}")
-print(f"Base Fee: {BASE_FEE} (0.0001 USDT)")
+print(f"Base Fee: {BASE_FEE}")
 print(f"Supported Networks: {', '.join(SUPPORTED_NETWORKS)}")
 
 print(f"\nNetwork Details:")
@@ -141,7 +144,7 @@ async def fee_quote(request: FeeQuoteRequest):
         Fee quote response with fee details
     """
     try:
-        return await facilitator.fee_quote(request.accept, request.paymentPermitContext)
+        return await facilitator.fee_quote(request.accepts, request.paymentPermitContext)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:

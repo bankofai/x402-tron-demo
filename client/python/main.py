@@ -13,7 +13,7 @@ from pathlib import Path
 import httpx
 import logging
 from dotenv import load_dotenv
-from x402_tron.clients import X402Client, X402HttpClient
+from x402_tron.clients import X402Client, X402HttpClient, SufficientBalancePolicy
 from x402_tron.config import NetworkConfig
 from x402_tron.mechanisms.client import ExactTronClientMechanism
 from x402_tron.signers.client import TronClientSigner
@@ -34,10 +34,12 @@ TRON_PRIVATE_KEY = os.getenv("TRON_PRIVATE_KEY", "")
 # Network selection - Change this to use different networks
 # Options: NetworkConfig.TRON_MAINNET, NetworkConfig.TRON_NILE, NetworkConfig.TRON_SHASTA
 CURRENT_NETWORK = NetworkConfig.TRON_NILE
+# CURRENT_NETWORK = NetworkConfig.TRON_MAINNET
 
 # Server configuration
 RESOURCE_SERVER_URL = os.getenv("SERVER_URL", "http://localhost:8000")
 ENDPOINT_PATH = "/protected-nile"
+# ENDPOINT_PATH = "/protected-mainnet"
 RESOURCE_URL = RESOURCE_SERVER_URL + ENDPOINT_PATH
 HTTP_TIMEOUT_SECONDS = float(os.getenv("HTTP_TIMEOUT_SECONDS", "60"))
 
@@ -61,7 +63,11 @@ async def main():
     print(f"Resource URL: {RESOURCE_URL}")
     print(f"PaymentPermit Contract: {NetworkConfig.get_payment_permit_address(CURRENT_NETWORK)}")
     
-    x402_client = X402Client().register(CURRENT_NETWORK, ExactTronClientMechanism(signer))
+    x402_client = (
+        X402Client()
+        .register(CURRENT_NETWORK, ExactTronClientMechanism(signer))
+        .register_policy(SufficientBalancePolicy(signer))
+    )
     
     print(f"\nSupported Networks and Tokens:")
     for network_name in ["tron:mainnet", "tron:nile", "tron:shasta"]:
