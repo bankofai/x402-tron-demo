@@ -88,7 +88,7 @@ async function main(): Promise<void> {
   hr();
 
   const x402 = new X402Client({ tokenStrategy: new DefaultTokenSelectionStrategy() })
-    .register('tron:*', new ExactTronClientMechanism(signer));
+    .register('tron:*', new ExactTronClientMechanism(signer))
     .registerPolicy(sufficientBalancePolicy(signer));
 
   const client = new X402FetchClient(x402);
