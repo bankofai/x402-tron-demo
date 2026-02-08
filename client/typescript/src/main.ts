@@ -16,8 +16,8 @@ import {
   X402FetchClient,
   ExactTronClientMechanism,
   TronClientSigner,
-  DefaultTokenSelectionStrategy,
-  sufficientBalancePolicy,
+  CheapestTokenSelectionStrategy,
+  SufficientBalancePolicy,
   decodePaymentPayload,
   getPaymentPermitAddress,
   type SettleResponse,
@@ -87,9 +87,9 @@ async function main(): Promise<void> {
   console.log(`  Resource : ${SERVER_URL}${ENDPOINT}`);
   hr();
 
-  const x402 = new X402Client({ tokenStrategy: new DefaultTokenSelectionStrategy() })
+  const x402 = new X402Client({ tokenStrategy: new CheapestTokenSelectionStrategy() })
     .register('tron:*', new ExactTronClientMechanism(signer))
-    .registerPolicy(sufficientBalancePolicy(signer));
+    .registerPolicy(new SufficientBalancePolicy(signer));
 
   const client = new X402FetchClient(x402);
 
