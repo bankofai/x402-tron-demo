@@ -8,10 +8,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"],
-    "paths": {
-      "@bankofai/x402-tron": ["../../../x402-tron/typescript/packages/x402/dist"]
-    }
+    "types": ["node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
