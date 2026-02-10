@@ -11,6 +11,8 @@ from x402_tron.server import X402Server
 from x402_tron.fastapi import x402_protected
 from x402_tron.facilitator import FacilitatorClient
 from x402_tron.config import NetworkConfig
+from x402_tron.mechanisms.server import ExactEvmServerMechanism
+from x402_tron.mechanisms.native_exact import NativeExactEvmServerMechanism
 from x402_tron.tokens import TokenRegistry
 
 from PIL import Image, ImageDraw, ImageFont
@@ -47,6 +49,7 @@ app.add_middleware(
 
 # Configuration
 PAY_TO_ADDRESS = os.getenv("PAY_TO_ADDRESS")
+BSC_PAY_TO_ADDRESS = os.getenv("BSC_PAY_TO_ADDRESS", "")
 if not PAY_TO_ADDRESS:
     raise ValueError("PAY_TO_ADDRESS environment variable is required")
 
@@ -68,6 +71,9 @@ _request_count = 0
 
 # Initialize server (TRON mechanisms auto-registered by default)
 server = X402Server()
+# Register BSC testnet mechanisms
+server.register(NetworkConfig.BSC_TESTNET, ExactEvmServerMechanism())
+server.register(NetworkConfig.BSC_TESTNET, NativeExactEvmServerMechanism())
 # Add facilitator
 facilitator = FacilitatorClient(base_url=FACILITATOR_URL)
 server.set_facilitator(facilitator)
@@ -87,6 +93,8 @@ for net in registered_networks:
     tokens = TokenRegistry.get_network_tokens(net)
     is_current = " (CURRENT)" if net == CURRENT_NETWORK else ""
     print(f"  {net}{is_current}:")
+    permit_addr = NetworkConfig.get_payment_permit_address(net)
+    print(f"    PaymentPermit: {permit_addr}")
     if not tokens:
         print("    (no tokens registered)")
         continue
@@ -154,6 +162,7 @@ async def root():
     # Token must be registered in TokenRegistry for the network
     network=CURRENT_NETWORK,  # Uses the network configured above
     pay_to=PAY_TO_ADDRESS,
+    scheme="exact",
 )
 async def protected_endpoint(request: Request):
     """Serve the protected image (generated dynamically)"""
@@ -177,6 +186,7 @@ async def protected_endpoint(request: Request):
     prices=["0.0001 USDT"],  # Price format: "<amount> <token_symbol>"
     network=NetworkConfig.TRON_SHASTA,  # Uses TRON shasta testnet
     pay_to=PAY_TO_ADDRESS,
+    scheme="exact",
 )
 async def protected_shasta_endpoint(request: Request):
     """Serve the protected image (shasta payment) - generated dynamically"""
@@ -200,6 +210,7 @@ async def protected_shasta_endpoint(request: Request):
     prices=["0.0001 USDT"],  # Price format: "<amount> <token_symbol>"
     network=NetworkConfig.TRON_MAINNET,  # Uses TRON mainnet
     pay_to=PAY_TO_ADDRESS,
+    scheme="exact",
 )
 async def protected_mainnet_endpoint(request: Request):
     """Serve the protected image (mainnet payment) - generated dynamically"""
@@ -217,6 +228,30 @@ async def protected_mainnet_endpoint(request: Request):
     return StreamingResponse(buf, media_type="image/png")
 
 
+@app.get("/protected-bsc-testnet")
+@x402_protected(
+    server=server,
+    prices=["0.0001 USDC"],
+    network=NetworkConfig.BSC_TESTNET,
+    pay_to=BSC_PAY_TO_ADDRESS,
+    scheme="exact",
+)
+async def protected_bsc_testnet_endpoint(request: Request):
+    """Serve the protected image (BSC testnet payment) - generated dynamically"""
+    global _request_count
+    if not PROTECTED_IMAGE_PATH.exists():
+        return {"error": "Protected image not found"}
+
+    with _request_count_lock:
+        _request_count += 1
+        request_count = _request_count
+
+    buf = generate_protected_image(
+        f"bsc-test req: {request_count}", text_color=(0, 200, 255, 255)
+    )
+    return StreamingResponse(buf, media_type="image/png")
+
+
 if __name__ == "__main__":
     import uvicorn
 
@@ -226,9 +261,10 @@ if __name__ == "__main__":
     print(f"Host: {SERVER_HOST}")
     print(f"Port: {SERVER_PORT}")
     print("Endpoints:")
-    print("  /protected-nile     - Payment (0.0001 USDT) [Nile testnet]")
-    print("  /protected-shasta   - Payment (0.0001 USDT) [Shasta testnet]")
-    print("  /protected-mainnet  - Payment (0.0001 USDT) [Mainnet]")
+    print("  /protected-nile         - Payment (0.0001 USDT) [Nile testnet]")
+    print("  /protected-shasta       - Payment (0.0001 USDT) [Shasta testnet]")
+    print("  /protected-mainnet      - Payment (0.0001 USDT) [Mainnet]")
+    print("  /protected-bsc-testnet  - Payment (0.0001 USDT/USDC) [BSC Testnet]")
     print("=" * 80 + "\n")
 
     uvicorn.run(
