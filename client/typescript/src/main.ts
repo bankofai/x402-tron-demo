@@ -16,6 +16,7 @@ import {
   X402FetchClient,
   ExactTronClientMechanism,
   ExactEvmClientMechanism,
+  NativeExactEvmClientMechanism,
   TronClientSigner,
   EvmClientSigner,
   DefaultTokenSelectionStrategy,
@@ -103,6 +104,7 @@ async function main(): Promise<void> {
   const x402 = new X402Client({ tokenStrategy: new DefaultTokenSelectionStrategy() });
   if (isEvmNetwork) {
     x402.register('eip155:*', new ExactEvmClientMechanism(signer as EvmClientSigner));
+    x402.register('eip155:*', new NativeExactEvmClientMechanism(signer as EvmClientSigner));
   } else {
     x402.register('tron:*', new ExactTronClientMechanism(signer as TronClientSigner));
   }

@@ -69,8 +69,9 @@ TRON_BASE_FEE = {
     "USDD": 100_000_000_000_000,  # 0.0001 USDD (18 decimals)
 }
 BSC_BASE_FEE = {
-    "USDT": 100_000_000_000_000,  # 0.0001 USDT (18 decimals on BSC testnet)
-    "USDC": 100_000_000_000_000,  # 0.0001 USDC (18 decimals on BSC testnet)
+    "USDT": 100_000_000_000_000,      # 0.0001 USDT (18 decimals on BSC testnet)
+    "USDC": 100_000_000_000_000,      # 0.0001 USDC (18 decimals on BSC testnet)
+    "DHLU": 100,  # 0.0001 DHLU (6 decimals on BSC testnet)
 }
 
 if not TRON_PRIVATE_KEY:

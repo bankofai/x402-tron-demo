@@ -157,12 +157,10 @@ async def root():
 @app.get("/protected-nile")
 @x402_protected(
     server=server,
-    prices=["0.0001 USDT", "0.0001 USDD"],  # Price format: "<amount> <token_symbol>"
-    # Currently only USDT is supported
-    # Token must be registered in TokenRegistry for the network
-    network=CURRENT_NETWORK,  # Uses the network configured above
+    prices=["0.0001 USDT", "0.0001 USDD"],
+    schemes=["exact", "exact"],
+    network=CURRENT_NETWORK,
     pay_to=PAY_TO_ADDRESS,
-    scheme="exact",
 )
 async def protected_endpoint(request: Request):
     """Serve the protected image (generated dynamically)"""
@@ -183,10 +181,10 @@ async def protected_endpoint(request: Request):
 @app.get("/protected-shasta")
 @x402_protected(
     server=server,
-    prices=["0.0001 USDT"],  # Price format: "<amount> <token_symbol>"
-    network=NetworkConfig.TRON_SHASTA,  # Uses TRON shasta testnet
+    prices=["0.0001 USDT"],
+    schemes=["exact"],
+    network=NetworkConfig.TRON_SHASTA,
     pay_to=PAY_TO_ADDRESS,
-    scheme="exact",
 )
 async def protected_shasta_endpoint(request: Request):
     """Serve the protected image (shasta payment) - generated dynamically"""
@@ -207,10 +205,10 @@ async def protected_shasta_endpoint(request: Request):
 @app.get("/protected-mainnet")
 @x402_protected(
     server=server,
-    prices=["0.0001 USDT"],  # Price format: "<amount> <token_symbol>"
-    network=NetworkConfig.TRON_MAINNET,  # Uses TRON mainnet
+    prices=["0.0001 USDT"],
+    schemes=["exact"],
+    network=NetworkConfig.TRON_MAINNET,
     pay_to=PAY_TO_ADDRESS,
-    scheme="exact",
 )
 async def protected_mainnet_endpoint(request: Request):
     """Serve the protected image (mainnet payment) - generated dynamically"""
@@ -231,10 +229,10 @@ async def protected_mainnet_endpoint(request: Request):
 @app.get("/protected-bsc-testnet")
 @x402_protected(
     server=server,
-    prices=["0.0001 USDC"],
+    prices=["0.0001 DHLU"],
     network=NetworkConfig.BSC_TESTNET,
     pay_to=BSC_PAY_TO_ADDRESS,
-    scheme="exact",
+    schemes=["native_exact"],
 )
 async def protected_bsc_testnet_endpoint(request: Request):
     """Serve the protected image (BSC testnet payment) - generated dynamically"""
@@ -264,7 +262,7 @@ if __name__ == "__main__":
     print("  /protected-nile         - Payment (0.0001 USDT) [Nile testnet]")
     print("  /protected-shasta       - Payment (0.0001 USDT) [Shasta testnet]")
     print("  /protected-mainnet      - Payment (0.0001 USDT) [Mainnet]")
-    print("  /protected-bsc-testnet  - Payment (0.0001 USDT/USDC) [BSC Testnet]")
+    print("  /protected-bsc-testnet  - Payment (0.0001 USDC exact, 0.0001 DHLU native_exact) [BSC Testnet]")
     print("=" * 80 + "\n")
 
     uvicorn.run(
