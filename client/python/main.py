@@ -13,13 +13,13 @@ from pathlib import Path
 import httpx
 import logging
 from dotenv import load_dotenv
-from x402_tron.clients import X402Client, X402HttpClient, SufficientBalancePolicy
-from x402_tron.config import NetworkConfig
-from x402_tron.mechanisms.tron.exact_permit import ExactPermitTronClientMechanism
-from x402_tron.mechanisms.evm.exact_permit import ExactPermitEvmClientMechanism
-from x402_tron.mechanisms.evm.exact import ExactEvmClientMechanism
-from x402_tron.signers.client import TronClientSigner, EvmClientSigner
-from x402_tron.tokens import TokenRegistry
+from bankofai.x402.clients import X402Client, X402HttpClient, SufficientBalancePolicy
+from bankofai.x402.config import NetworkConfig
+from bankofai.x402.mechanisms.tron.exact_permit import ExactPermitTronClientMechanism
+from bankofai.x402.mechanisms.evm.exact_permit import ExactPermitEvmClientMechanism
+from bankofai.x402.mechanisms.evm.exact import ExactEvmClientMechanism
+from bankofai.x402.signers.client import TronClientSigner, EvmClientSigner
+from bankofai.x402.tokens import TokenRegistry
 
 # Enable detailed logging
 logging.basicConfig(
@@ -115,8 +115,8 @@ async def main():
             # Parse payment response if present
             payment_response = response.headers.get('payment-response')
             if payment_response:
-                from x402_tron.encoding import decode_payment_payload
-                from x402_tron.types import SettleResponse
+                from bankofai.x402.encoding import decode_payment_payload
+                from bankofai.x402.types import SettleResponse
                 settle_response = decode_payment_payload(payment_response, SettleResponse)
                 print(f"\n📋 Payment Response:")
                 print(f"  Success: {settle_response.success}")

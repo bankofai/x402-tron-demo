@@ -24,7 +24,7 @@ import {
   decodePaymentPayload,
   getPaymentPermitAddress,
   type SettleResponse,
-} from '@bankofai/x402-tron';
+} from '@bankofai/x402';
 
 // ---------------------------------------------------------------------------
 // Configuration

@@ -14,15 +14,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from x402_tron.logging_config import setup_logging
-from x402_tron.facilitator import X402Facilitator
-from x402_tron.mechanisms.tron.exact_permit import ExactPermitTronFacilitatorMechanism
-from x402_tron.mechanisms.evm.exact_permit import ExactPermitEvmFacilitatorMechanism
-from x402_tron.mechanisms.evm.exact import ExactEvmFacilitatorMechanism
-from x402_tron.signers.facilitator import TronFacilitatorSigner, EvmFacilitatorSigner
-from x402_tron.config import NetworkConfig
-from x402_tron.tokens import TokenRegistry
-from x402_tron.types import (
+from bankofai.x402.logging_config import setup_logging
+from bankofai.x402.facilitator import X402Facilitator
+from bankofai.x402.mechanisms.tron.exact_permit import ExactPermitTronFacilitatorMechanism
+from bankofai.x402.mechanisms.evm.exact_permit import ExactPermitEvmFacilitatorMechanism
+from bankofai.x402.mechanisms.evm.exact import ExactEvmFacilitatorMechanism
+from bankofai.x402.signers.facilitator import TronFacilitatorSigner, EvmFacilitatorSigner
+from bankofai.x402.config import NetworkConfig
+from bankofai.x402.tokens import TokenRegistry
+from bankofai.x402.types import (
     PaymentPayload,
     PaymentRequirements,
     SupportedFee,
