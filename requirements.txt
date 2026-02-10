@@ -1,8 +1,8 @@
 # X402 TRON Demo - Python Dependencies
 # Install with: pip install -r requirements.txt
 
-# Core x402-tron SDK with TRON and FastAPI support (source branch)
-x402-tron[tron,fastapi] @ git+https://github.com/bankofai/x402-tron@v0.2.0#subdirectory=python/x402
+# Core bankofai-x402 SDK with TRON and FastAPI support (GitHub master branch)
+bankofai-x402[tron,fastapi] @ git+https://github.com/bankofai/x402.git@main#subdirectory=python/x402
 
 # Web framework
 fastapi>=0.104.0
@@ -19,6 +19,7 @@ tronpy>=0.4.0
 
 # Ethereum utilities (for address/signature handling)
 eth-account>=0.10.0
+web3>=6.0.0
 
 # Image processing (for server protected resource)
 Pillow>=10.0.0

@@ -1,8 +1,8 @@
-# X402-Tron Demo
+# X402 Demo
 
 ## Overview
 
-The **X402-Tron Demo** provides a practical demonstration of integrating the **x402 payment protocol** with the TRON blockchain. While not a fully-fledged application, this demo aims to showcase how decentralized micropayments can be used to enable pay-per-access workflows.
+The **X402 Demo** provides a practical demonstration of integrating the **x402 payment protocol** with the TRON blockchain. While not a fully-fledged application, this demo aims to showcase how decentralized micropayments can be used to enable pay-per-access workflows.
 
 ### Key Concept: Payment Workflow Simulation
 

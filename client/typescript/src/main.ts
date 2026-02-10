@@ -14,14 +14,17 @@ import { TronWeb } from 'tronweb';
 import {
   X402Client,
   X402FetchClient,
-  ExactTronClientMechanism,
+  ExactPermitTronClientMechanism,
+  ExactPermitEvmClientMechanism,
+  ExactEvmClientMechanism,
   TronClientSigner,
+  EvmClientSigner,
   DefaultTokenSelectionStrategy,
   SufficientBalancePolicy,
   decodePaymentPayload,
   getPaymentPermitAddress,
   type SettleResponse,
-} from '@bankofai/x402-tron';
+} from '@bankofai/x402';
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -30,17 +33,28 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: resolve(__dirname, '../../../.env') });
 
-const TRON_PRIVATE_KEY = process.env.TRON_PRIVATE_KEY ?? '';
+const TRON_PRIVATE_KEY  = process.env.TRON_PRIVATE_KEY ?? '';
+const BSC_PRIVATE_KEY   = process.env.BSC_PRIVATE_KEY ?? '';
 const SERVER_URL       = process.env.SERVER_URL ?? 'http://localhost:8000';
-const NETWORK          = 'tron:nile';
-const ENDPOINT         = '/protected-nile';
-const TRON_GRID_HOST   = 'https://nile.trongrid.io';
+// const NETWORK          = 'tron:nile';
+// const ENDPOINT         = '/protected-nile';
 // const NETWORK          = 'tron:mainnet';
 // const ENDPOINT         = '/protected-mainnet';
+// const NETWORK          = 'eip155:56';
+// const ENDPOINT         = '/protected-bsc-mainnet';
+const NETWORK          = 'eip155:97';
+const ENDPOINT         = '/protected-bsc-testnet';
+const BSC_TESTNET_RPC  = 'https://data-seed-prebsc-1-s1.binance.org:8545/';
+const BSC_MAINNET_RPC  = 'https://bsc-dataseed.binance.org/';
+const TRON_GRID_HOST   = 'https://nile.trongrid.io';
 // const TRON_GRID_HOST   = 'https://api.trongrid.io';
 
-if (!TRON_PRIVATE_KEY) {
-  console.error('Error: TRON_PRIVATE_KEY not set in .env');
+const isEvmNetwork = NETWORK.startsWith('eip155:');
+const PRIVATE_KEY = isEvmNetwork ? BSC_PRIVATE_KEY : TRON_PRIVATE_KEY;
+
+if (!PRIVATE_KEY) {
+  const keyName = isEvmNetwork ? 'BSC_PRIVATE_KEY' : 'TRON_PRIVATE_KEY';
+  console.error(`Error: ${keyName} not set in .env`);
   process.exit(1);
 }
 
@@ -74,9 +88,15 @@ async function saveImage(response: Response): Promise<string> {
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  const networkName = NETWORK.split(':')[1];
-  const tronWeb = new TronWeb({ fullHost: TRON_GRID_HOST, privateKey: TRON_PRIVATE_KEY }) as any;
-  const signer  = TronClientSigner.withPrivateKey(tronWeb, TRON_PRIVATE_KEY, networkName as any);
+  let signer: TronClientSigner | EvmClientSigner;
+  if (isEvmNetwork) {
+    const rpcUrl = NETWORK === 'eip155:56' ? BSC_MAINNET_RPC : BSC_TESTNET_RPC;
+    signer = new EvmClientSigner(PRIVATE_KEY, rpcUrl);
+  } else {
+    const networkName = NETWORK.split(':')[1];
+    const tronWeb = new TronWeb({ fullHost: TRON_GRID_HOST, privateKey: PRIVATE_KEY }) as any;
+    signer = TronClientSigner.withPrivateKey(tronWeb, PRIVATE_KEY, networkName as any);
+  }
 
   hr();
   console.log('X402 Client (TypeScript)');
@@ -87,9 +107,14 @@ async function main(): Promise<void> {
   console.log(`  Resource : ${SERVER_URL}${ENDPOINT}`);
   hr();
 
-  const x402 = new X402Client({ tokenStrategy: new DefaultTokenSelectionStrategy() })
-    .register('tron:*', new ExactTronClientMechanism(signer))
-    .registerPolicy(new SufficientBalancePolicy(signer));
+  const x402 = new X402Client({ tokenStrategy: new DefaultTokenSelectionStrategy() });
+  if (isEvmNetwork) {
+    x402.register('eip155:*', new ExactPermitEvmClientMechanism(signer as EvmClientSigner));
+    x402.register('eip155:*', new ExactEvmClientMechanism(signer as EvmClientSigner));
+  } else {
+    x402.register('tron:*', new ExactPermitTronClientMechanism(signer as TronClientSigner));
+  }
+  x402.registerPolicy(new SufficientBalancePolicy(signer));
 
   const client = new X402FetchClient(x402);
 

@@ -7,11 +7,13 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from x402_tron.server import X402Server
-from x402_tron.fastapi import x402_protected
-from x402_tron.facilitator import FacilitatorClient
-from x402_tron.config import NetworkConfig
-from x402_tron.tokens import TokenRegistry
+from bankofai.x402.server import X402Server
+from bankofai.x402.fastapi import x402_protected
+from bankofai.x402.facilitator import FacilitatorClient
+from bankofai.x402.config import NetworkConfig
+from bankofai.x402.mechanisms.evm.exact_permit import ExactPermitEvmServerMechanism
+from bankofai.x402.mechanisms.evm.exact import ExactEvmServerMechanism
+from bankofai.x402.tokens import TokenInfo, TokenRegistry
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -25,10 +27,10 @@ logging.basicConfig(
 )
 
 # Set specific loggers to DEBUG for detailed output
-logging.getLogger("x402_tron").setLevel(logging.DEBUG)
-logging.getLogger("x402_tron.server").setLevel(logging.DEBUG)
-logging.getLogger("x402_tron.fastapi").setLevel(logging.DEBUG)
-logging.getLogger("x402_tron.utils").setLevel(logging.DEBUG)
+logging.getLogger("bankofai.x402").setLevel(logging.DEBUG)
+logging.getLogger("bankofai.x402.server").setLevel(logging.DEBUG)
+logging.getLogger("bankofai.x402.fastapi").setLevel(logging.DEBUG)
+logging.getLogger("bankofai.x402.utils").setLevel(logging.DEBUG)
 logging.getLogger("uvicorn.access").setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
@@ -47,6 +49,7 @@ app.add_middleware(
 
 # Configuration
 PAY_TO_ADDRESS = os.getenv("PAY_TO_ADDRESS")
+BSC_PAY_TO_ADDRESS = os.getenv("BSC_PAY_TO_ADDRESS", "")
 if not PAY_TO_ADDRESS:
     raise ValueError("PAY_TO_ADDRESS environment variable is required")
 
@@ -69,6 +72,12 @@ _request_count = 0
 
 # Initialize server (TRON mechanisms auto-registered by default)
 server = X402Server()
+# Register BSC testnet mechanisms
+server.register(NetworkConfig.BSC_TESTNET, ExactPermitEvmServerMechanism())
+server.register(NetworkConfig.BSC_TESTNET, ExactEvmServerMechanism())
+# Register BSC mainnet mechanisms
+server.register(NetworkConfig.BSC_MAINNET, ExactPermitEvmServerMechanism())
+server.register(NetworkConfig.BSC_MAINNET, ExactEvmServerMechanism())
 # Add facilitator (with X-API-KEY if configured)
 facilitator_headers = {"X-API-KEY": FACILITATOR_API_KEY} if FACILITATOR_API_KEY else None
 facilitator = FacilitatorClient(
@@ -93,6 +102,8 @@ for net in registered_networks:
     tokens = TokenRegistry.get_network_tokens(net)
     is_current = " (CURRENT)" if net == CURRENT_NETWORK else ""
     print(f"  {net}{is_current}:")
+    permit_addr = NetworkConfig.get_payment_permit_address(net)
+    print(f"    PaymentPermit: {permit_addr}")
     if not tokens:
         print("    (no tokens registered)")
         continue
@@ -155,10 +166,9 @@ async def root():
 @app.get("/protected-nile")
 @x402_protected(
     server=server,
-    prices=["0.0001 USDT", "0.0001 USDD"],  # Price format: "<amount> <token_symbol>"
-    # Currently only USDT is supported
-    # Token must be registered in TokenRegistry for the network
-    network=CURRENT_NETWORK,  # Uses the network configured above
+    prices=["0.0001 USDT", "0.0001 USDD"],
+    schemes=["exact_permit", "exact_permit"],
+    network=CURRENT_NETWORK,
     pay_to=PAY_TO_ADDRESS,
 )
 async def protected_endpoint(request: Request):
@@ -180,8 +190,9 @@ async def protected_endpoint(request: Request):
 @app.get("/protected-shasta")
 @x402_protected(
     server=server,
-    prices=["0.0001 USDT"],  # Price format: "<amount> <token_symbol>"
-    network=NetworkConfig.TRON_SHASTA,  # Uses TRON shasta testnet
+    prices=["0.0001 USDT"],
+    schemes=["exact_permit"],
+    network=NetworkConfig.TRON_SHASTA,
     pay_to=PAY_TO_ADDRESS,
 )
 async def protected_shasta_endpoint(request: Request):
@@ -203,8 +214,9 @@ async def protected_shasta_endpoint(request: Request):
 @app.get("/protected-mainnet")
 @x402_protected(
     server=server,
-    prices=["0.0001 USDT"],  # Price format: "<amount> <token_symbol>"
-    network=NetworkConfig.TRON_MAINNET,  # Uses TRON mainnet
+    prices=["0.0001 USDT"],
+    schemes=["exact_permit"],
+    network=NetworkConfig.TRON_MAINNET,
     pay_to=PAY_TO_ADDRESS,
 )
 async def protected_mainnet_endpoint(request: Request):
@@ -223,6 +235,54 @@ async def protected_mainnet_endpoint(request: Request):
     return StreamingResponse(buf, media_type="image/png")
 
 
+@app.get("/protected-bsc-mainnet")
+@x402_protected(
+    server=server,
+    prices=["0.0001 EPS"],
+    network=NetworkConfig.BSC_MAINNET,
+    pay_to=BSC_PAY_TO_ADDRESS,
+    schemes=["exact_permit"],
+)
+async def protected_bsc_mainnet_endpoint(request: Request):
+    """Serve the protected image (BSC mainnet payment) - generated dynamically"""
+    global _request_count
+    if not PROTECTED_IMAGE_PATH.exists():
+        return {"error": "Protected image not found"}
+
+    with _request_count_lock:
+        _request_count += 1
+        request_count = _request_count
+
+    buf = generate_protected_image(
+        f"bsc-mainnet req: {request_count}", text_color=(255, 165, 0, 255)
+    )
+    return StreamingResponse(buf, media_type="image/png")
+
+
+@app.get("/protected-bsc-testnet")
+@x402_protected(
+    server=server,
+    prices=["0.0001 DHLU"],
+    network=NetworkConfig.BSC_TESTNET,
+    pay_to=BSC_PAY_TO_ADDRESS,
+    schemes=["exact"],
+)
+async def protected_bsc_testnet_endpoint(request: Request):
+    """Serve the protected image (BSC testnet payment) - generated dynamically"""
+    global _request_count
+    if not PROTECTED_IMAGE_PATH.exists():
+        return {"error": "Protected image not found"}
+
+    with _request_count_lock:
+        _request_count += 1
+        request_count = _request_count
+
+    buf = generate_protected_image(
+        f"bsc-test req: {request_count}", text_color=(0, 200, 255, 255)
+    )
+    return StreamingResponse(buf, media_type="image/png")
+
+
 if __name__ == "__main__":
     import uvicorn
 
@@ -232,9 +292,11 @@ if __name__ == "__main__":
     print(f"Host: {SERVER_HOST}")
     print(f"Port: {SERVER_PORT}")
     print("Endpoints:")
-    print("  /protected-nile     - Payment (0.0001 USDT) [Nile testnet]")
-    print("  /protected-shasta   - Payment (0.0001 USDT) [Shasta testnet]")
-    print("  /protected-mainnet  - Payment (0.0001 USDT) [Mainnet]")
+    print("  /protected-nile         - Payment (0.0001 USDT) [Nile testnet]")
+    print("  /protected-shasta       - Payment (0.0001 USDT) [Shasta testnet]")
+    print("  /protected-mainnet      - Payment (0.0001 USDT) [Mainnet]")
+    print("  /protected-bsc-mainnet  - Payment (0.0001 EPS exact_permit) [BSC Mainnet]")
+    print("  /protected-bsc-testnet  - Payment (0.0001 DHLU exact) [BSC Testnet]")
     print("=" * 80 + "\n")
 
     uvicorn.run(

@@ -14,13 +14,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-from x402_tron.logging_config import setup_logging
-from x402_tron.facilitator import X402Facilitator
-from x402_tron.mechanisms.facilitator import ExactTronFacilitatorMechanism
-from x402_tron.signers.facilitator import TronFacilitatorSigner
-from x402_tron.config import NetworkConfig
-from x402_tron.tokens import TokenRegistry
-from x402_tron.types import (
+from bankofai.x402.logging_config import setup_logging
+from bankofai.x402.facilitator import X402Facilitator
+from bankofai.x402.mechanisms.tron.exact_permit import ExactPermitTronFacilitatorMechanism
+from bankofai.x402.mechanisms.evm.exact_permit import ExactPermitEvmFacilitatorMechanism
+from bankofai.x402.mechanisms.evm.exact import ExactEvmFacilitatorMechanism
+from bankofai.x402.signers.facilitator import TronFacilitatorSigner, EvmFacilitatorSigner
+from bankofai.x402.config import NetworkConfig
+from bankofai.x402.tokens import TokenRegistry
+from bankofai.x402.types import (
     PaymentPayload,
     PaymentRequirements,
     SupportedFee,
@@ -54,20 +56,31 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 
 # Configuration
 TRON_PRIVATE_KEY = os.getenv("TRON_PRIVATE_KEY", "")
-
-# Supported networks
-SUPPORTED_NETWORKS = ["mainnet", "shasta", "nile"]
+BSC_PRIVATE_KEY = os.getenv("BSC_PRIVATE_KEY", "")
 
 # Facilitator configuration
 FACILITATOR_HOST = "0.0.0.0"
 FACILITATOR_PORT = 8001
-BASE_FEE = {
+# TRON supported networks
+TRON_NETWORKS = ["mainnet", "shasta", "nile"]
+
+# Fee config per token (smallest unit)
+TRON_BASE_FEE = {
     "USDT": 100,       # 0.0001 USDT (6 decimals)
     "USDD": 100_000_000_000_000,  # 0.0001 USDD (18 decimals)
+}
+BSC_BASE_FEE = {
+    "USDT": 100_000_000_000_000,      # 0.0001 USDT (18 decimals on BSC testnet)
+    "USDC": 100_000_000_000_000,      # 0.0001 USDC (18 decimals on BSC testnet)
+}
+BSC_MAINNET_BASE_FEE = {
+    "EPS": 100_000_000_000_000,       # 0.0001 EPS (18 decimals on BSC mainnet)
 }
 
 if not TRON_PRIVATE_KEY:
     raise ValueError("TRON_PRIVATE_KEY environment variable is required")
+if not BSC_PRIVATE_KEY:
+    raise ValueError("BSC_PRIVATE_KEY environment variable is required")
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -85,39 +98,72 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Get facilitator address from first signer
-first_signer = TronFacilitatorSigner.from_private_key(
-    TRON_PRIVATE_KEY,
-    network=SUPPORTED_NETWORKS[0],
+# Get facilitator addresses
+bsc_signer = EvmFacilitatorSigner.from_private_key(
+    BSC_PRIVATE_KEY,
+    network=NetworkConfig.BSC_TESTNET,
 )
-facilitator_address = first_signer.get_address()
+bsc_facilitator_address = bsc_signer.get_address()
 
 # Initialize X402Facilitator
 facilitator = X402Facilitator()
 
-# Register mechanisms for each network
-for network in SUPPORTED_NETWORKS:
+# Register TRON mechanisms
+for network in TRON_NETWORKS:
     signer = TronFacilitatorSigner.from_private_key(
         TRON_PRIVATE_KEY,
         network=network,
     )
-    mechanism = ExactTronFacilitatorMechanism(
+    mechanism = ExactPermitTronFacilitatorMechanism(
         signer,
-        fee_to=facilitator_address,
-        base_fee=BASE_FEE,
+        base_fee=TRON_BASE_FEE,
     )
     facilitator.register([f"tron:{network}"], mechanism)
+
+# Register BSC testnet mechanisms (exact + exact)
+bsc_exact_mechanism = ExactPermitEvmFacilitatorMechanism(
+    bsc_signer,
+    fee_to=bsc_facilitator_address,
+    base_fee=BSC_BASE_FEE,
+)
+facilitator.register([NetworkConfig.BSC_TESTNET], bsc_exact_mechanism)
+
+bsc_native_mechanism = ExactEvmFacilitatorMechanism(
+    bsc_signer,
+)
+facilitator.register([NetworkConfig.BSC_TESTNET], bsc_native_mechanism)
+
+# Register BSC mainnet mechanisms (exact + exact)
+bsc_mainnet_signer = EvmFacilitatorSigner.from_private_key(
+    BSC_PRIVATE_KEY,
+    network=NetworkConfig.BSC_MAINNET,
+)
+bsc_mainnet_facilitator_address = bsc_mainnet_signer.get_address()
+
+bsc_mainnet_exact_mechanism = ExactPermitEvmFacilitatorMechanism(
+    bsc_mainnet_signer,
+    fee_to=bsc_mainnet_facilitator_address,
+    base_fee=BSC_MAINNET_BASE_FEE,
+)
+facilitator.register([NetworkConfig.BSC_MAINNET], bsc_mainnet_exact_mechanism)
+
+bsc_mainnet_native_mechanism = ExactEvmFacilitatorMechanism(
+    bsc_mainnet_signer,
+)
+facilitator.register([NetworkConfig.BSC_MAINNET], bsc_mainnet_native_mechanism)
 
 print("=" * 80)
 print("X402 Payment Facilitator - Configuration")
 print("=" * 80)
-print(f"Facilitator Address: {facilitator_address}")
-print(f"Base Fee: {BASE_FEE}")
-print(f"Supported Networks: {', '.join(SUPPORTED_NETWORKS)}")
+print(f"BSC  Facilitator Address: {bsc_facilitator_address}")
+print(f"TRON Base Fee: {TRON_BASE_FEE}")
+print(f"BSC  Base Fee: {BSC_BASE_FEE}")
+
+all_networks = [f"tron:{n}" for n in TRON_NETWORKS] + [NetworkConfig.BSC_MAINNET, NetworkConfig.BSC_TESTNET]
+print(f"Supported Networks: {', '.join(all_networks)}")
 
 print(f"\nNetwork Details:")
-for network in SUPPORTED_NETWORKS:
-    network_key = f"tron:{network}"
+for network_key in all_networks:
     print(f"  {network_key}:")
     print(f"    PaymentPermit: {NetworkConfig.get_payment_permit_address(network_key)}")
     tokens = TokenRegistry.get_network_tokens(network_key)
@@ -129,7 +175,7 @@ print("=" * 80)
 @app.get("/supported")
 def supported():
     """Get supported capabilities"""
-    return facilitator.supported(fee_to=facilitator_address, pricing="flat")
+    return facilitator.supported(pricing="flat")
 
 
 @app.post("/fee/quote")
@@ -199,8 +245,8 @@ def main():
     print("=" * 80)
     print(f"Host: {FACILITATOR_HOST}")
     print(f"Port: {FACILITATOR_PORT}")
-    print(f"Facilitator Address: {facilitator_address}")
-    print(f"Supported Networks: {', '.join(SUPPORTED_NETWORKS)}")
+    print(f"BSC  Facilitator Address: {bsc_facilitator_address}")
+    print(f"Supported Networks: {', '.join(all_networks)}")
     print("=" * 80)
     print("\nEndpoints:")
     print(f"  GET  http://{FACILITATOR_HOST}:{FACILITATOR_PORT}/supported")
