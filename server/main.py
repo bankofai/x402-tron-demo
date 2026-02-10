@@ -60,6 +60,7 @@ CURRENT_NETWORK = NetworkConfig.TRON_NILE
 
 # Server configuration
 FACILITATOR_URL = os.getenv("FACILITATOR_URL", "http://localhost:8001")
+FACILITATOR_API_KEY = os.getenv("FACILITATOR_API_KEY", "")  # Optional: for facilitator auth
 SERVER_HOST = "0.0.0.0"
 SERVER_PORT = 8000
 
@@ -77,8 +78,12 @@ server.register(NetworkConfig.BSC_TESTNET, ExactEvmServerMechanism())
 # Register BSC mainnet mechanisms
 server.register(NetworkConfig.BSC_MAINNET, ExactPermitEvmServerMechanism())
 server.register(NetworkConfig.BSC_MAINNET, ExactEvmServerMechanism())
-# Add facilitator
-facilitator = FacilitatorClient(base_url=FACILITATOR_URL)
+# Add facilitator (with X-API-KEY if configured)
+facilitator_headers = {"X-API-KEY": FACILITATOR_API_KEY} if FACILITATOR_API_KEY else None
+facilitator = FacilitatorClient(
+    base_url=FACILITATOR_URL,
+    headers=facilitator_headers,
+)
 server.set_facilitator(facilitator)
 
 print("=" * 80)
@@ -87,6 +92,7 @@ print("=" * 80)
 print(f"Current Network: {CURRENT_NETWORK}")
 print(f"Pay To Address: {PAY_TO_ADDRESS}")
 print(f"Facilitator URL: {FACILITATOR_URL}")
+print(f"Facilitator API Key: {'*configured*' if FACILITATOR_API_KEY else '(not set)'}")
 permit_address = NetworkConfig.get_payment_permit_address(CURRENT_NETWORK)
 print(f"PaymentPermit Contract: {permit_address}")
 
