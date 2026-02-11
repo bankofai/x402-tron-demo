@@ -18,9 +18,8 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Build outputs
-client/web/dist/
-client/web/build/
+# Client CLI tools (not needed in Docker image)
+client/
 
 # IDE
 .vscode/

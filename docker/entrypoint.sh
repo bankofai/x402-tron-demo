@@ -37,7 +37,6 @@ mkdir -p /app/logs
 
 echo ""
 echo "Services will be available at:"
-echo "  - Client Web:  http://localhost:80"
 echo "  - Server API:  http://localhost:8000"
 echo "  - Facilitator: http://localhost:8001"
 echo ""
